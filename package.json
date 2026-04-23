@@ -1,6 +1,6 @@
 {
   "name": "@james.hankins/feedback-kit",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Unified feedback and bug reporting widget for React/Next.js apps. Ideas post to Canny, bugs file in Linear.",
   "author": "James Hankins",
   "license": "MIT",
