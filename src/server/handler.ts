@@ -207,7 +207,7 @@ async function submitIdea(
   }
   try {
     const identity = buildCannyIdentity(payload.user);
-    const authorID = await cannyRetrieveOrCreateUser(
+    const authorID = await cannyCreateOrUpdateUser(
       config.cannyApiKey,
       identity,
     );
@@ -287,12 +287,12 @@ function buildCannyIdentity(user: FeedbackPayloadUser | undefined): CannyIdentit
   return { userID, email, name };
 }
 
-async function cannyRetrieveOrCreateUser(
+async function cannyCreateOrUpdateUser(
   apiKey: string,
   identity: CannyIdentity,
 ): Promise<string> {
   const res = await fetch(
-    "https://canny.io/api/v1/users/retrieve_or_create",
+    "https://canny.io/api/v1/users/create_or_update",
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -301,7 +301,8 @@ async function cannyRetrieveOrCreateUser(
   );
   const text = await res.text();
   if (!res.ok) {
-    throw new Error(`Canny user upsert failed (${res.status}): ${text}`);
+    const snippet = text.length > 300 ? `${text.slice(0, 300)}…` : text;
+    throw new Error(`Canny user upsert failed (${res.status}): ${snippet}`);
   }
   const data = safeJson(text) as { id?: string } | null;
   if (!data?.id) {
@@ -336,7 +337,8 @@ async function cannyCreatePost(
   });
   const text = await res.text();
   if (!res.ok) {
-    throw new Error(`Canny post create failed (${res.status}): ${text}`);
+    const snippet = text.length > 300 ? `${text.slice(0, 300)}…` : text;
+    throw new Error(`Canny post create failed (${res.status}): ${snippet}`);
   }
   const data = safeJson(text) as { id?: string } | null;
   if (!data?.id) {
@@ -371,7 +373,8 @@ async function linearCreateIssue(
   });
   const text = await res.text();
   if (!res.ok) {
-    throw new Error(`Linear request failed (${res.status}): ${text}`);
+    const snippet = text.length > 300 ? `${text.slice(0, 300)}…` : text;
+    throw new Error(`Linear request failed (${res.status}): ${snippet}`);
   }
   const data = safeJson(text) as
     | {
