@@ -1,5 +1,5 @@
 {
-  "name": "@jbdevelopment/feedback-kit",
+  "name": "@james.hankins/feedback-kit",
   "version": "0.2.1",
   "description": "Unified feedback and bug reporting widget for React/Next.js apps. Ideas post to Canny, bugs file in Linear.",
   "author": "James Hankins",
@@ -76,8 +76,7 @@
     "typescript": "^5.4.0"
   },
   "publishConfig": {
-    "access": "public",
-    "provenance": true
+    "access": "public"
   },
   "engines": {
     "node": ">=18.0.0"

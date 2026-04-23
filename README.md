@@ -1,4 +1,4 @@
-# @jbdevelopment/feedback-kit
+# @james.hankins/feedback-kit
 
 A drop-in feedback + bug reporting widget for React / Next.js apps. Ideas post to Canny, bugs file as Linear issues.
 
@@ -11,7 +11,7 @@ A drop-in feedback + bug reporting widget for React / Next.js apps. Ideas post t
 ## Install
 
 ```bash
-npm install @jbdevelopment/feedback-kit
+npm install @james.hankins/feedback-kit
 ```
 
 Peer deps: `react >=18`, `next >=13` (Next is optional — only needed if you use the route handler).
@@ -20,7 +20,7 @@ Peer deps: `react >=18`, `next >=13` (Next is optional — only needed if you us
 
 ```tsx
 // app/layout.tsx
-import { FeedbackButton } from "@jbdevelopment/feedback-kit/client";
+import { FeedbackButton } from "@james.hankins/feedback-kit/client";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -76,7 +76,7 @@ The simplest integration — re-export the handler:
 
 ```ts
 // app/api/feedback/route.ts
-export { POST } from "@jbdevelopment/feedback-kit/server";
+export { POST } from "@james.hankins/feedback-kit/server";
 ```
 
 Set these env vars (per app):
@@ -97,7 +97,7 @@ If you'd rather inject config than read `process.env`:
 
 ```ts
 // app/api/feedback/route.ts
-import { createPOST } from "@jbdevelopment/feedback-kit/server";
+import { createPOST } from "@james.hankins/feedback-kit/server";
 
 export const POST = createPOST({
   cannyApiKey: process.env.CANNY_KEY,
@@ -119,7 +119,7 @@ import {
   submitFeedback,
   checkRateLimit,
   validateFeedbackPayload,
-} from "@jbdevelopment/feedback-kit/server";
+} from "@james.hankins/feedback-kit/server";
 
 // In your own handler:
 const rl = checkRateLimit(clientIp);

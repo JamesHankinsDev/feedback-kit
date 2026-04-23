@@ -79,7 +79,7 @@ function envConfig(): FeedbackConfig {
 
 /**
  * Default POST handler that reads configuration from process.env.
- * Re-export from your app: `export { POST } from "@jbdevelopment/feedback-kit/server";`
+ * Re-export from your app: `export { POST } from "@james.hankins/feedback-kit/server";`
  */
 export async function POST(req: Request): Promise<Response> {
   return createPOST(envConfig())(req);
