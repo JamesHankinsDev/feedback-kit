@@ -1,0 +1,16 @@
+# Publishing is driven by the `files` field in package.json, but keep an
+# explicit blocklist as defense in depth.
+src
+example
+.github
+.vscode
+.idea
+node_modules
+coverage
+*.log
+*.tsbuildinfo
+tsconfig.json
+tsup.config.ts
+.gitignore
+.env
+.env.*
