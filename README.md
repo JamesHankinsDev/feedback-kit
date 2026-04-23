@@ -6,7 +6,7 @@ A drop-in feedback + bug reporting widget for React / Next.js apps. Ideas post t
 - Next.js App Router route handler that validates, rate-limits, and dispatches to Canny or Linear
 - Framework-agnostic core (`submitFeedback`, `checkRateLimit`) for non-Next consumers
 - Dual ESM + CJS output with `.d.ts` / `.d.cts` types
-- Tailwind-styled (consumers are expected to have Tailwind)
+- **Zero styling setup** — all CSS is bundled and auto-injected on mount. Works in apps with or without Tailwind, CSS Modules, or any particular stack.
 
 ## Install
 
@@ -54,6 +54,21 @@ The component:
 - Autofocuses the title, supports Esc-to-close, validates title (3–200 chars) and details (<5000 chars)
 - Captures page URL, path, user agent, viewport, and timestamp on submit
 - Auto-reports widget failures: if a submission hits a 5xx or network error, the widget files a single Linear bug describing the failure (once per session)
+- Injects its own scoped CSS (`fbkit-*` classnames) on first mount — no Tailwind, CSS import, or config required in the host app
+
+### Theming
+
+All styles are prefixed with `fbkit-` so they cannot collide with host styles. To tweak the look, set CSS custom properties on any ancestor (or `:root`):
+
+```css
+:root {
+  --fbkit-accent: #2563eb;       /* FAB + primary button background */
+  --fbkit-accent-hover: #1d4ed8; /* primary button hover */
+  --fbkit-radius: 0.75rem;       /* modal corner radius */
+}
+```
+
+For heavier customization, override the prefixed classes in your global stylesheet.
 
 ## Server usage (Next.js App Router)
 

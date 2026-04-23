@@ -37,6 +37,258 @@ const TITLE_MIN = 3;
 const TITLE_MAX = 200;
 const DETAILS_MAX = 5000;
 
+const STYLE_ELEMENT_ID = "feedback-kit-styles";
+
+// Styles are injected once per document, idempotently. Prefixed with `fbkit-`
+// so they never collide with host app styles. Theming via CSS custom
+// properties — set `--fbkit-accent` and `--fbkit-radius` on any ancestor.
+const CSS = `
+.fbkit-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border: 0;
+  border-radius: 9999px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: #ffffff;
+  background: var(--fbkit-accent, #171717);
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.10), 0 4px 6px -4px rgba(0,0,0,0.10);
+  cursor: pointer;
+  transition: background-color 150ms ease;
+  box-sizing: border-box;
+}
+.fbkit-trigger:hover { background: var(--fbkit-accent-hover, #262626); }
+.fbkit-trigger:focus-visible {
+  outline: 2px solid rgba(23,23,23,0.4);
+  outline-offset: 2px;
+}
+.fbkit-trigger--floating { position: fixed; z-index: 2147483646; }
+.fbkit-trigger--bottom-right { bottom: 1.25rem; right: 1.25rem; }
+.fbkit-trigger--bottom-left { bottom: 1.25rem; left: 1.25rem; }
+.fbkit-trigger-icon { font-size: 1rem; line-height: 1; }
+
+.fbkit-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+.fbkit-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.fbkit-modal {
+  position: relative;
+  width: 100%;
+  max-width: 28rem;
+  padding: 1.5rem;
+  background: #ffffff;
+  color: #171717;
+  border-radius: var(--fbkit-radius, 1rem);
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+.fbkit-modal *, .fbkit-modal *::before, .fbkit-modal *::after {
+  box-sizing: border-box;
+}
+
+.fbkit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.fbkit-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #171717;
+}
+.fbkit-close {
+  padding: 0.25rem 0.375rem;
+  border: 0;
+  background: transparent;
+  color: #a3a3a3;
+  font-size: 1rem;
+  line-height: 1;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+}
+.fbkit-close:hover { background: #f5f5f5; color: #525252; }
+.fbkit-close:focus-visible {
+  outline: 2px solid #a3a3a3;
+  outline-offset: 1px;
+}
+
+.fbkit-tabs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 0.25rem;
+  margin-bottom: 1rem;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+.fbkit-tab {
+  padding: 0.375rem 0.75rem;
+  border: 0;
+  background: transparent;
+  color: #525252;
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: inherit;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.fbkit-tab:hover { color: #171717; }
+.fbkit-tab[aria-selected="true"] {
+  background: #ffffff;
+  color: #171717;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+
+.fbkit-field { display: block; margin-bottom: 0.75rem; }
+.fbkit-field--last { margin-bottom: 1rem; }
+.fbkit-field-label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+}
+.fbkit-field-label-optional {
+  font-weight: 400;
+  color: #a3a3a3;
+}
+
+.fbkit-input, .fbkit-textarea {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  font-family: inherit;
+  color: #171717;
+  background: #ffffff;
+  border: 1px solid #d4d4d4;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+.fbkit-input:focus, .fbkit-textarea:focus {
+  outline: none;
+  border-color: #737373;
+  box-shadow: 0 0 0 1px #737373;
+}
+.fbkit-input::placeholder, .fbkit-textarea::placeholder { color: #a3a3a3; }
+.fbkit-textarea { resize: vertical; min-height: 5.5rem; }
+
+.fbkit-counter {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  text-align: right;
+  color: #a3a3a3;
+}
+
+.fbkit-error {
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  font-size: 0.875rem;
+}
+
+.fbkit-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+.fbkit-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: inherit;
+  line-height: 1.25;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease;
+}
+.fbkit-btn--ghost {
+  background: transparent;
+  color: #525252;
+}
+.fbkit-btn--ghost:hover { color: #171717; }
+.fbkit-btn--primary {
+  background: var(--fbkit-accent, #171717);
+  color: #ffffff;
+}
+.fbkit-btn--primary:hover { background: var(--fbkit-accent-hover, #262626); }
+.fbkit-btn--primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--fbkit-accent, #171717);
+}
+.fbkit-btn:focus-visible {
+  outline: 2px solid rgba(23,23,23,0.4);
+  outline-offset: 2px;
+}
+
+.fbkit-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 0;
+  text-align: center;
+}
+.fbkit-success-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  font-size: 1.5rem;
+  color: #166534;
+  background: #dcfce7;
+  border-radius: 9999px;
+}
+.fbkit-success-message { margin: 0; color: #525252; }
+`;
+
+let stylesInjected = false;
+function injectStyles() {
+  if (stylesInjected || typeof document === "undefined") return;
+  if (document.getElementById(STYLE_ELEMENT_ID)) {
+    stylesInjected = true;
+    return;
+  }
+  const el = document.createElement("style");
+  el.id = STYLE_ELEMENT_ID;
+  el.textContent = CSS;
+  document.head.appendChild(el);
+  stylesInjected = true;
+}
+
 type SubmissionContext = {
   url: string;
   path: string;
@@ -80,6 +332,10 @@ export function FeedbackButton(props: FeedbackButtonProps) {
   const titleInputRef = useRef<HTMLInputElement>(null);
   const autoReportedRef = useRef(false);
 
+  useEffect(() => {
+    injectStyles();
+  }, []);
+
   const reset = useCallback(() => {
     setKind("idea");
     setTitle("");
@@ -91,7 +347,6 @@ export function FeedbackButton(props: FeedbackButtonProps) {
 
   const close = useCallback(() => {
     setOpen(false);
-    // Delay reset so the closing transition doesn't flash.
     window.setTimeout(reset, 150);
   }, [reset]);
 
@@ -142,7 +397,7 @@ export function FeedbackButton(props: FeedbackButtonProps) {
           keepalive: true,
         });
       } catch {
-        // Swallow — we already surface the original error to the user.
+        // Swallow — the original error is already surfaced to the user.
       }
     },
     [endpoint, appSlug, user],
@@ -190,7 +445,6 @@ export function FeedbackButton(props: FeedbackButtonProps) {
           }
           setError(message);
           setSubmitting(false);
-          // Only auto-report true server errors, not validation or rate-limit.
           if (res.status >= 500) {
             void autoReportFailure(kind, message, res.status);
           }
@@ -226,19 +480,15 @@ export function FeedbackButton(props: FeedbackButtonProps) {
     [close],
   );
 
-  const triggerPositionClass = inline
-    ? ""
-    : position === "bottom-left"
-      ? "fixed bottom-5 left-5 z-[9998]"
-      : "fixed bottom-5 right-5 z-[9998]";
-
-  const triggerClasses = [
-    triggerPositionClass,
-    "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium",
-    "bg-neutral-900 text-white shadow-lg hover:bg-neutral-800",
-    "focus:outline-none focus:ring-2 focus:ring-neutral-400 focus:ring-offset-2",
-    "transition-colors",
-    className ?? "",
+  const triggerClassList = [
+    "fbkit-trigger",
+    inline ? null : "fbkit-trigger--floating",
+    inline
+      ? null
+      : position === "bottom-left"
+        ? "fbkit-trigger--bottom-left"
+        : "fbkit-trigger--bottom-right",
+    className ?? null,
   ]
     .filter(Boolean)
     .join(" ");
@@ -248,11 +498,11 @@ export function FeedbackButton(props: FeedbackButtonProps) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={triggerClasses}
+        className={triggerClassList}
         aria-haspopup="dialog"
         aria-expanded={open}
       >
-        <span aria-hidden="true">💬</span>
+        <span className="fbkit-trigger-icon" aria-hidden="true">💬</span>
         <span>Feedback</span>
       </button>
 
@@ -262,29 +512,23 @@ export function FeedbackButton(props: FeedbackButtonProps) {
           aria-modal="true"
           aria-labelledby={titleId}
           onKeyDown={onBackdropKey}
-          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+          className="fbkit-overlay"
         >
           <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            className="fbkit-backdrop"
             onClick={close}
             aria-hidden="true"
           />
-          <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-xl ring-1 ring-black/5">
+          <div className="fbkit-modal">
             {success ? (
-              <div className="flex flex-col items-center gap-3 py-4 text-center">
-                <div
-                  className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 text-2xl"
-                  aria-hidden="true"
-                >
+              <div className="fbkit-success">
+                <div className="fbkit-success-icon" aria-hidden="true">
                   ✓
                 </div>
-                <h2
-                  id={titleId}
-                  className="text-lg font-semibold text-neutral-900"
-                >
+                <h2 id={titleId} className="fbkit-title">
                   Thanks — we got it
                 </h2>
-                <p className="text-sm text-neutral-600">
+                <p className="fbkit-success-message">
                   {kind === "idea"
                     ? "Your idea has been posted for the team to review."
                     : "The bug has been logged. We'll take a look."}
@@ -292,34 +536,28 @@ export function FeedbackButton(props: FeedbackButtonProps) {
                 <button
                   type="button"
                   onClick={close}
-                  className="mt-2 inline-flex items-center rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800"
+                  className="fbkit-btn fbkit-btn--primary"
                 >
                   Close
                 </button>
               </div>
             ) : (
               <form onSubmit={submit} noValidate>
-                <div className="mb-4 flex items-center justify-between">
-                  <h2
-                    id={titleId}
-                    className="text-lg font-semibold text-neutral-900"
-                  >
+                <div className="fbkit-header">
+                  <h2 id={titleId} className="fbkit-title">
                     Send feedback
                   </h2>
                   <button
                     type="button"
                     onClick={close}
-                    className="rounded-md p-1 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-600 focus:outline-none focus:ring-2 focus:ring-neutral-400"
+                    className="fbkit-close"
                     aria-label="Close"
                   >
                     <span aria-hidden="true">✕</span>
                   </button>
                 </div>
 
-                <div
-                  className="mb-4 inline-flex rounded-lg bg-neutral-100 p-1"
-                  role="tablist"
-                >
+                <div className="fbkit-tabs" role="tablist">
                   {(["idea", "bug"] as const).map((k) => (
                     <button
                       key={k}
@@ -327,22 +565,15 @@ export function FeedbackButton(props: FeedbackButtonProps) {
                       role="tab"
                       aria-selected={kind === k}
                       onClick={() => setKind(k)}
-                      className={[
-                        "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-                        kind === k
-                          ? "bg-white text-neutral-900 shadow-sm"
-                          : "text-neutral-600 hover:text-neutral-900",
-                      ].join(" ")}
+                      className="fbkit-tab"
                     >
                       {k === "idea" ? "💡 Idea" : "🐛 Bug"}
                     </button>
                   ))}
                 </div>
 
-                <label className="mb-3 block">
-                  <span className="mb-1 block text-sm font-medium text-neutral-700">
-                    Title
-                  </span>
+                <label className="fbkit-field">
+                  <span className="fbkit-field-label">Title</span>
                   <input
                     ref={titleInputRef}
                     type="text"
@@ -354,15 +585,15 @@ export function FeedbackButton(props: FeedbackButtonProps) {
                         ? "A short summary of your idea"
                         : "What went wrong?"
                     }
-                    className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
+                    className="fbkit-input"
                     required
                   />
                 </label>
 
-                <label className="mb-4 block">
-                  <span className="mb-1 block text-sm font-medium text-neutral-700">
+                <label className="fbkit-field fbkit-field--last">
+                  <span className="fbkit-field-label">
                     Details{" "}
-                    <span className="font-normal text-neutral-400">
+                    <span className="fbkit-field-label-optional">
                       (optional)
                     </span>
                   </span>
@@ -376,34 +607,31 @@ export function FeedbackButton(props: FeedbackButtonProps) {
                         ? "Any extra context that would help"
                         : "Steps to reproduce, what you expected, what happened"
                     }
-                    className="w-full rounded-md border border-neutral-300 px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-500 focus:outline-none focus:ring-1 focus:ring-neutral-500"
+                    className="fbkit-textarea"
                   />
-                  <div className="mt-1 text-right text-xs text-neutral-400">
+                  <div className="fbkit-counter">
                     {details.length}/{DETAILS_MAX}
                   </div>
                 </label>
 
                 {error ? (
-                  <div
-                    role="alert"
-                    className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-red-200"
-                  >
+                  <div role="alert" className="fbkit-error">
                     {error}
                   </div>
                 ) : null}
 
-                <div className="flex items-center justify-end gap-2">
+                <div className="fbkit-actions">
                   <button
                     type="button"
                     onClick={close}
-                    className="rounded-md px-4 py-2 text-sm font-medium text-neutral-600 hover:text-neutral-900"
+                    className="fbkit-btn fbkit-btn--ghost"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={!canSubmit}
-                    className="inline-flex items-center rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="fbkit-btn fbkit-btn--primary"
                   >
                     {submitting ? "Sending…" : "Send"}
                   </button>
